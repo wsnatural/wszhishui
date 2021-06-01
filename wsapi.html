@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Websocket接口API</title>
+  <meta name="keywords" content="中海,中海银河,中海银河官网,中海银河科技（北京）有限公司,智慧社区解决方案,智慧社区服务平台,智慧生活,智慧小区,公租房人脸识别,人工智能,人脸识别">
+  <meta name="description" content="中海银河科技（北京）有限公司，属于高新技术企业。中海银河用专业和便捷重新定义产品和用户体验，致力于成为国内领先的人工智能和大数据产品与技术服务提供商。产品包括：智慧社区整体解决方案、人脸识别、物联网大数据平台等。访问中海银河，了解和购买旷世产品，并获得技术支持。">
+<link rel="stylesheet" type="text/css" href="./public/doc-public.css?v=0.2">
+</head>
+<body class='typora-export os-windows typora-export-show-outline typora-export-collapse-outline'>
+  <div class="zhyh_box">
+    <div class="zhyh_head">
+      <div class="head_box">
+        <a class="head_title" href="./index.html">智能测温一体机</a>
+        <div class="head_nav">
+          <a href="./index.html">使用手册</a>
+          <a href="./manual.html">管理平台使用手册</a>
+          <a href="./httpapi.html">HTTP接口API</a>
+          <a href="./wsapi.html" class="active">Websocket接口API</a>
+        </div>
+      </div>
+    </div>
+    <div class="zhyh_main">
+<div class='typora-export-content'>
+<div class="typora-export-sidebar"><div class="outline-content"><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#websocket协议概述">Websocket协议概述</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#常见问题---faq">常见问题 - FAQ</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#全局错误码">全局错误码</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#客户端声明">客户端声明</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#心跳包">心跳包</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#下发人员信息到设备">下发人员信息到设备</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#修改人员信息">修改人员信息</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#删除人员信息">删除人员信息</a></div><ul class="outline-children"></ul></li></div></div><div id='write'  class=''>
+<table style="border:0px;"></table><h1 class="hx_pm" id='websocket协议概述'><span>Websocket协议概述</span></h1><p><strong><span>1、接口简述</span></strong></p><p><span>服务器搭建 </span><a href='https://baike.baidu.com/item/WebSocket'><span>websocket</span></a><span> 长连接服务与设备连接。</span></p><p>&nbsp;</p><p><strong><span>2、服务规范</span></strong></p><p><strong><span>服务地址：</span></strong><span> ws://服务器ip:port 或 wss://服务器ip:port （IP可替换成域名）</span>
+<span>(</span><a href='https://blog.csdn.net/Garrettzxd/article/details/81674251' target='_blank' class='url'>https://blog.csdn.net/Garrettzxd/article/details/81674251</a><span>)</span>
+<strong><span>服务形式：</span></strong><span> 通过长连接的方式实时通讯</span>
+<strong><span>协议格式：</span></strong><span> json</span>
+<strong><span>字符编码：</span></strong><span> UTF-8</span></p><p><strong><span>照片编码流程：</span></strong>
+<span>1、下发的人脸图片压缩成 jpg 格式，大小不超过 300 kb ( 尺寸不超过 1280 * 720 ) ，我们正常是 50 kb 左右</span>
+<span>2、把压缩后的图片转换成完整的 Base64 格式（必须加上前缀 “data:image/jpeg;base64,”）</span>
+<span>3、把完整的 Base64 图片使用 UrlEncode 方法进行 UTF-8 格式的编码。</span></p><p><strong><span>照片解码流程：</span></strong>
+<span>1、使用 UrlDecode 方法进行 UTF-8 格式的解码；</span>
+<span>2、把解码后的数据使用 Base64 转换成图片（有 Base64 前缀的需要去掉前缀才能转换成图像）。</span></p><p>&nbsp;</p><p><strong><span>3、通信</span></strong></p><p><strong><span>流程</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">步骤</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>1、设备端连接</td>
+			<td>设备通过wss服务地址连接到服务端</td>
+		</tr>
+		<tr>
+			<td>2、设备端声明</td>
+			<td>2.1 设备发送协议的声明内容</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td>2.2 服务端根据声明内容对 wss 设备端进行分组保存，并返回客户端连接的唯一标识 client_id（备注：这是我们后台的处理方式，可以做参考，具体可以根据自己业务流程调整）</td>
+		</tr>
+		<tr>
+			<td>3、心跳包</td>
+			<td>设备定时发送心跳包到服务端维持连接</td>
+		</tr>
+		<tr>
+			<td>4、增加人员信息</td>
+			<td>4.1 服务端根据协议发送指令和数据</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td>4.2 设备端处理完请求后，发送处理结果</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td>4.3 服务端接收结果并处理</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p><strong><span>4、通信示例（业务）</span></strong></p><p><strong><span>服务端发送数据示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json" style="break-inside: unset;"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_device"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"client_id"</span>,</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"设备编号"</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"addUser"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"用户id"</span>,</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"name"</span>:<span class="cm-string">"姓名"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"face_template"</span>:<span class="cm-string">"彩色照片base64"</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"vlface_template"</span>:<span class="cm-string">"红外照片base64"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"id_valid"</span>:<span class="cm-string">"有效期"</span>,</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"Ic"</span>:<span class="cm-string">"ic卡号"</span></span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 322px;"></div><div class="CodeMirror-gutters" style="display: none; height: 322px;"></div></div></div></pre><p><strong><span>设备端返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_client"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"设备编号"</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"上面请求示例form的client_id "</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"addUserRet"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"上面请求示例user_id的用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"code"</span>:<span class="cm-number">0</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"msg"</span>:<span class="cm-string">"返回说明"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 253px;"></div><div class="CodeMirror-gutters" style="display: none; height: 253px;"></div></div></div></pre><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='常见问题---faq'><span>常见问题 - FAQ</span></h1><p><strong><span>1.web socket 大批量下发人员数据容易断开</span></strong></p><pre lang="json" spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.25px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre>x</pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">答</span>: <span class="cm-variable">建议改成每次下发一条，收到设备反馈的结果后再下发另外一条。每条数据的超时时间设置为</span><span class="cm-string-2">`10`</span><span class="cm-variable">秒。因为如果大批量发送很多数据到</span><span class="cm-string-2">`web socket`</span><span class="cm-variable">管道中，可能设备网络不好接收不过来会导致管道存不下，就导致</span><span class="cm-string-2">`web socket`</span><span class="cm-variable">断开连接了。</span></span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 46px;"></div><div class="CodeMirror-gutters" style="display: none; height: 46px;"></div></div></div></pre><p><strong><span>2.web socket 文档中的 form 字段内容传什么值</span></strong></p><pre lang="json" spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.25px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">答</span>: <span class="cm-variable">设备没有针对这个值做业务逻辑处理，只是在回复指令时</span><span class="cm-string-2">`to`</span><span class="cm-variable">字段的内容为这个值。如果服务端也没有用到这个值，那么可以固定一个值，或者为空字符串。备注：我们服务端现在这个值使用的是网页端</span><span class="cm-string-2">`wss`</span><span class="cm-variable">的唯一</span><span class="cm-string-2">`id`</span><span class="cm-variable">。</span></span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 46px;"></div><div class="CodeMirror-gutters" style="display: none; height: 46px;"></div></div></div></pre><p><strong><span>服务端指令示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded md-focus" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap CodeMirror-focused" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 101.5px; left: 129px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_device"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"123"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"RL1234"</span>,</span></pre></div><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:<span class="cm-meta">...</span></span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><strong><span>设备端返回示例</span></strong></p><pre lang="json" spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_client"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"RL1234"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"123"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:<span class="cm-meta">...</span>.</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><strong><span>3.</span><a href='#下发人员信息到设备'><span>下发人员信息到设备</span></a><span> 接口中的 mode 1 和 mode 0 的区别</span></strong></p><pre lang="json" spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre>x</pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">答</span>: </span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-string-2">`mode 0`</span> <span class="cm-operator">-</span> <span class="cm-variable">表示在收到数据的同时进行录入到算法库和保存到设备的操作，录入失败或者成功的结果由</span><span class="cm-string-2">`web socket`</span><span class="cm-variable">及时返回。</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span> <span class="cm-operator">-</span> <span class="cm-variable">流程为</span>: <span class="cm-variable">『服务端</span><span class="cm-string-2">`ws`</span><span class="cm-variable">下发』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备录入到算法库』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备保存』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备</span><span class="cm-string-2">`ws`</span><span class="cm-variable">返回录入失败或者成功的结果』。</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-string-2">`mode 1`</span> <span class="cm-operator">-</span> &nbsp;<span class="cm-variable">表示设备在收到数据后先保存在设备中，然后在后台开启录入模式，录入失败或者成功的结果由</span> <span class="cm-variable">http</span> [<span class="cm-variable">上传用户录入结果的接口</span>] <span class="cm-variable">接口异步返回。</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  <span class="cm-tab" role="presentation" cm-text="	">    </span> <span class="cm-operator">-</span> <span class="cm-variable">流程为</span>: <span class="cm-variable">『服务端</span><span class="cm-string-2">`ws`</span><span class="cm-variable">下发』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备保存』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备</span><span class="cm-string-2">`ws`</span><span class="cm-variable">返回保存结果』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备后台录入到算法库』</span> <span class="cm-operator">-</span> <span class="cm-variable">『设备通过</span><span class="cm-string-2">`http`</span><span class="cm-variable">接口返回录入结果』</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span cm-text="">​</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-string-2">`mode 0`</span><span class="cm-variable">和</span><span class="cm-string-2">`mode 1`</span><span class="cm-variable">模式的区别</span>:</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-number">1.</span><span class="cm-variable">最大区别是录入结果是否是及时返回的，</span><span class="cm-string-2">`mode 1`</span><span class="cm-variable">模式及时返回的只有保存结果，而不是最终的录入结果，可能保存成功了后面算法校验图片不合格最终的录入结果是失败的。</span><span class="cm-string-2">`mode 0`</span><span class="cm-variable">模式返回成功了就一定是成功了</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-number">2.</span><span class="cm-string-2">`mode 1`</span><span class="cm-variable">模式的优点</span> <span class="cm-variable">由于不是下发时直接录入，那么下发人员会更快</span>(<span class="cm-variable">省去了录入到算法库的耗时</span>)</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 276px;"></div><div class="CodeMirror-gutters" style="display: none; height: 276px;"></div></div></div></pre><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='全局错误码'><span>全局错误码</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>web socket 接口的全局错误码</span></li></ul><p><span>全局返回码说明如下：</span></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 10%;">错误码</th>
+			<th style="width: 30%;">错误说明</th>
+			<th>排查方法</th>
+		</tr>
+		<tr>
+			<td>0</td>
+			<td>请求成功</td>
+			<td>接口处理成功</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>图片转换异常</td>
+			<td>需要检查图片格式是否正确</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td>图片不存在</td>
+			<td>通常是图片为必填的接口，没有传图片</td>
+		</tr>
+		<tr>
+			<td>3</td>
+			<td>数据错误</td>
+			<td>通常是必填的数据字段为空了</td>
+		</tr>
+		<tr>
+			<td>4</td>
+			<td>存储错误</td>
+			<td>设备存储空间不足</td>
+		</tr>
+		<tr>
+			<td>5</td>
+			<td>授权错误</td>
+			<td>通常是设备刚开机还没超过 20 秒就下发数据，会导致算法还没初始化成功</td>
+		</tr>
+		<tr>
+			<td>6</td>
+			<td>修改用户数据时，用户数据不存在</td>
+			<td>通常是修改用户数据时，用户数据不存在设备</td>
+		</tr>
+		<tr>
+			<td>7</td>
+			<td>操作失败</td>
+			<td>通常是修改设备设置时，设置失败了</td>
+		</tr>
+		<tr>
+			<td>8</td>
+			<td>离线存储成功</td>
+			<td>“mode 1”模式下存储成功了</td>
+		</tr>
+		<tr>
+			<td>9</td>
+			<td>其它错误</td>
+			<td>操作失败</td>
+		</tr>
+		<tr>
+			<td>10</td>
+			<td>密码已存在</td>
+			<td>下发密码时，密码已经存在了</td>
+		</tr>
+		<tr>
+			<td>10001</td>
+			<td>图片大小不符合规范</td>
+			<td>图片尺寸超过了接口指定的大小</td>
+		</tr>
+		<tr>
+			<td>10002</td>
+			<td>图片格式不正确</td>
+			<td>图片格式不是接口指定的格式</td>
+		</tr>
+		<tr>
+			<td>10020</td>
+			<td>暂无新版本</td>
+			<td>设备已经是最新版本了</td>
+		</tr>
+		<tr>
+			<td>10021</td>
+			<td>请求更新超时</td>
+			<td>设备端拉取服务端更新接口时超时了</td>
+		</tr>
+		<tr>
+			<td>10030</td>
+			<td>旧密码错误</td>
+			<td>旧密码不是当前设备的密码</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='客户端声明'><span>客户端声明</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>设备连接上 websocket 后调用该接口，发送以下数据到服务端（只在每次连接成功建立后调用，之后不会再次调动，除非重新连接。）</span></li></ul><p><strong><span>请求方式：</span></strong></p><ul><li><span>websocket</span></li></ul><p><strong><span>请求参数：</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">必选</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>指令，不同指令对应不同动作</td>
+		</tr>
+		<tr>
+			<td>type</td>
+			<td>是</td>
+			<td>string</td>
+			<td>请求的数据</td>
+		</tr>
+		<tr>
+			<td>sn</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备号(请查看公共设置中的设备号)</td>
+		</tr>
+		<tr>
+			<td>version_code</td>
+			<td>是</td>
+			<td>string</td>
+			<td>内部版本号(每次都会递增)</td>
+		</tr>
+		<tr>
+			<td>version_name</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备识别页面显示的版本号，有时候一些小改动更新，不会修改这个值，只会修改“version_code”</td>
+		</tr>
+		<tr>
+			<td>token</td>
+			<td>是</td>
+			<td>string</td>
+			<td>“token”是参数的默认名字，如果通过 设置“token”指令修改过的话，参数名会变化</td>
+		</tr>
+		<tr>
+			<td>ip</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备“ip”地址</td>
+		</tr>
+	</tbody>
+</table><p><strong><span>客户端请求实例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>: <span class="cm-string">"declare"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"type"</span>: <span class="cm-string">"device"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"sn"</span>: <span class="cm-string">"设备编号"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"version_code"</span>:<span class="cm-string">"1000xxx"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"version_name"</span>:<span class="cm-string">"x.x.x."</span></span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 161px;"></div><div class="CodeMirror-gutters" style="display: none; height: 161px;"></div></div></div></pre><p><strong><span>服务端返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre>x</pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>: <span class="cm-string">"declare"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"client_id"</span>: <span class="cm-string">"wss设备端唯一id值"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 92px;"></div><div class="CodeMirror-gutters" style="display: none; height: 92px;"></div></div></div></pre><p><strong><span>返回参数说明</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>client_id</td>
+			<td>string</td>
+			<td>“wss”客户端唯一id值，“wss_id”是服务端在建立起一条“ws”连接时所产生的，用于标记该条连接与设备的对应关系。比如“id”为“1”的连接对应“RLB-000001”设备</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='心跳包'><span>心跳包</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>wss 设备端端发送心跳包，wss 服务端回复。</span></li></ul><ul><li><span>wss 设备端 30 秒发送一次 ping 包，120s没收到服务器回应，就会断开连接，然后重连。</span></li></ul><p><strong><span>请求方式：</span></strong></p><ul><li><span>websocket</span></li></ul><p><strong><span>请求参数：</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">必选</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+	</tbody>
+</table><p><strong><span>设备端心跳包格式</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; <span class="cm-string cm-property">"cmd"</span> : <span class="cm-string">"ping"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; <span class="cm-string cm-property">"sn"</span>:<span class="cm-string">"设备号"</span></span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 92px;"></div><div class="CodeMirror-gutters" style="display: none; height: 92px;"></div></div></div></pre><p><strong><span>服务端心跳包返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>: <span class="cm-string">"pong"</span></span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 69px;"></div><div class="CodeMirror-gutters" style="display: none; height: 69px;"></div></div></div></pre><p><strong><span>返回参数说明</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='下发人员信息到设备'><span>下发人员信息到设备</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>实时下发人员信息到设备上（假如设备中已存在此 user_id，则会覆盖该人员）</span></li></ul><p><strong><span>请求方式：</span></strong></p><ul><li><span>websocket</span></li></ul><p><strong><span>请求参数：</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">必选</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>该接口固定为“to_device”，发送给设备用于识别对应哪个指令</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>是</td>
+			<td>string</td>
+			<td><a href="#常见问题 - FAQ">请查看常见问题 - web socket 文档中的 form 字段内容传什么值</a></td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备号(请查看公共设置中的设备号)</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>是</td>
+			<td>object</td>
+			<td>发送的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>user_id</td>
+			<td>是</td>
+			<td>string</td>
+			<td>用户id，注意“user_id”请不要使用“DL”开头</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>是</td>
+			<td>string</td>
+			<td>用户姓名</td>
+		</tr>
+		<tr>
+			<td>id_card</td>
+			<td>否</td>
+			<td>string</td>
+			<td>身份证号码</td>
+		</tr>
+		<tr>
+			<td>face_template</td>
+			<td>否</td>
+			<td>string</td>
+			<td>彩色照片，可以为两种格式。<br>1.http链接，例如(<a href="https://up.enterdesk.com/edpic/70/0e/33/700e3312f74e378fbcc2fb3819421e73.jpg">https://up.enterdesk.com/edpic/70/0e/33/700e3312f74e378fbcc2fb3819421e73.jpg</a>)。<br>2.直接传图片，<a href="#Websocket协议概述">参考【2.服务规范】中的照片编码规则</a>。<br>设备【验证模式】为【人脸或卡】时可以不传照片，非【人脸或卡】模式这个字段为必传</td>
+		</tr>
+		<tr>
+			<td>Ic</td>
+			<td>否</td>
+			<td>string</td>
+			<td>ic卡号。备注：下发的卡号为十进制时需要在【设备设置】-【识别设置】-【验证模式-人脸或卡】-【卡号类型-十进制】，默认为十六进制</td>
+		</tr>
+		<tr>
+			<td>password</td>
+			<td>否</td>
+			<td>string</td>
+			<td>开门密码，只能为纯数字，密码不能重复在设备中存在。设备启用密码开门功能并且使用<b>预先下发模式</b>时有效。请参考密码开门模式</td>
+		</tr>
+		<tr>
+			<td>user_type</td>
+			<td>否</td>
+			<td>int</td>
+			<td>"0": 正常用户；"10": 黑名单用户，识别后设备会报警，并产生黑名单识别记录；"2": 访客（访客到期后会自动从设备中删除）；"20": 只测温，不开门人员（只识别，测体温，亮绿灯，不通行）。可以不传，不传默认为正常用户</td>
+		</tr>
+		<tr>
+			<td>confidence_level</td>
+			<td>否</td>
+			<td>float</td>
+			<td>非特殊情况，该字段请留空，设备上可设置。设置单个人员的置信度，人脸比对照片的相似度超过该值算识别成功。</td>
+		</tr>
+		<tr>
+			<td>phone</td>
+			<td>否</td>
+			<td>string</td>
+			<td>手机号</td>
+		</tr>
+		<tr>
+			<td>effect_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>人员生效时间（人员在这个时间点后，才能通行）格式："yyyy-MM-dd"或者"yyyy-MM-dd HH:mm"，为""则为永久</td>
+		</tr>
+		<tr>
+			<td>id_valid</td>
+			<td>是</td>
+			<td>string</td>
+			<td>人员有效期（人员在这个时间点后，无法通行）格式："yyyy-MM-dd"或者"yyyy-MM-dd HH:mm"，为""则为永久</td>
+		</tr>
+		<tr>
+			<td>valid_cycle</td>
+			<td>否</td>
+			<td>array</td>
+			<td>人员的通行周期，用于更精准的控制人员的通行时间段，这个字段不为空时"start_time"和"end_time"必传，存在通行规则时"valid_cycle"无效</td>
+		</tr>
+		<tr>
+			<td>start_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>周期开始时间，24小时制，精确到分"HH:mm"</td>
+		</tr>
+		<tr>
+			<td>end_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>周期结束时间，24小时制，精确到分"HH:mm"</td>
+		</tr>
+		<tr>
+			<td>pass_rule_id</td>
+			<td>否</td>
+			<td>string</td>
+			<td>通行规则"id"，需要预先下发规则到设备，如果存在通行规则那么判断逻辑为(生效时间-过期时间)&gt;通行规则&gt;人员信息中的"valid_cycle"</td>
+		</tr>
+		<tr>
+			<td>mode</td>
+			<td>否</td>
+			<td>int</td>
+			<td>请先查看常见问题<a href="#常见问题 - FAQ">3.下发人员信息到设备 接口中的 mode 1 和 mode 0 的区别</a>，添加模式"0": 设备收到后就立即进行录入，录入结果通过"web socket"及时返回；"1": 设备收到后先进行存储到本地，然后再录入，最终录入结果通过"http"上传用户录入结果的接口返回。(默认使用"0"模式)</td>
+		</tr>
+	</tbody>
+</table><p><strong><span>服务端指令格式（</span><a href='https://github.com/Jimmy-J/MarkdownPhotos/raw/master/easco/protocol/websocket/下发人员数据.zip'><span>下载完整json数据</span></a><span>）</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json" style="break-inside: unset;"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre>x</pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_device"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"123"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"设备编号"</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"addUser"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"name"</span>:<span class="cm-string">"姓名"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"face_template"</span>:<span class="cm-string">"彩色照片base64 + url 编码"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"vlface_template"</span>:<span class="cm-string">"红外照片base64 + url 编码"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"effect_time"</span>:<span class="cm-string">"2020-0202 19:20"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"id_valid"</span>:<span class="cm-string">"2020-02-02 20:20"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"Ic"</span>:<span class="cm-string">"ic卡号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"confidence_level"</span>:<span class="cm-number">80</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"phone"</span>:<span class="cm-string">"18503036206"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"valid_cycle"</span>:[</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"start_time"</span>:<span class="cm-string">"07:00"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"end_time"</span>:<span class="cm-string">"08:00"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  },</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"start_time"</span>:<span class="cm-string">"12:00"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"end_time"</span>:<span class="cm-string">"13:30"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  }</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp;  ]</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 621px;"></div><div class="CodeMirror-gutters" style="display: none; height: 621px;"></div></div></div></pre><p><strong><span>设备端返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_client"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"设备编号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"原封不动的返回上面请求示例 form 字段的内容  123 "</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"addUserRet"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"上面请求示例user_id的用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"code"</span>:<span class="cm-number">0</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"msg"</span>:<span class="cm-string">"返回说明"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 253px;"></div><div class="CodeMirror-gutters" style="display: none; height: 253px;"></div></div></div></pre><p><strong><span>返回参数说明</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>"to_client"发送给网页端</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>string</td>
+			<td>设备编号</td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>string</td>
+			<td>网页端的"ws"客户端唯一"id"</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>array</td>
+			<td>返回的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>code</td>
+			<td>int</td>
+			<td>"0": 成功，其它值表示失败。<br><a href="#全局错误码"><b>全局错误码</b></a></td>
+		</tr>
+		<tr>
+			<td>msg</td>
+			<td>string</td>
+			<td>返回说明</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='修改人员信息'><span>修改人员信息</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>实时修改设备上的人员信息（</span><strong><span>修改模式下，假如该设备中没有此user_id，则会返回失败 code 为 6</span></strong><span>）</span></li></ul><p><strong><span>请求方式：</span></strong></p><ul><li><span>websocket</span></li></ul><p><strong><span>请求参数：</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">必选</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>"to_device"发送给设备</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>是</td>
+			<td>string</td>
+			<td><a href="#常见问题 - FAQ">请查看常见问题 - web socket 文档中的 form 字段内容传什么值</a></td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备编号</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>是</td>
+			<td>object</td>
+			<td>发送的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>user_id</td>
+			<td>是</td>
+			<td>string</td>
+			<td>用户id，注意"user_id"请不要使用"DL"开头</td>
+		</tr>
+		<tr>
+			<td>edit_mode</td>
+			<td>是</td>
+			<td>int</td>
+			<td>修改类型（默认值为"0"），"0"：表示<a href="#下发人员信息到设备">新增模式逻辑和下发用户接口一样</a>(<b>备注：这个模式是做接口兼容处理的，新对接的客户可以忽略，直接传"1"使用修改模式即可</b>) ；"1"：表示修改模式，会替换掉下发的"json"中存在的值，包括"string"类型为空字符的，不需要修改的值不传就好。<b>特别注意如果人员存在两张照片(彩色+红外)，但是只需要修改其中一张时，也要把两张照片下发下去，不能只下发一张</b></td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>否</td>
+			<td>string</td>
+			<td>用户姓名</td>
+		</tr>
+		<tr>
+			<td>face_template</td>
+			<td>否</td>
+			<td>string</td>
+			<td>彩色照片，可以为两种格式。<br>1.http链接，例如(<a href="https://up.enterdesk.com/edpic/70/0e/33/700e3312f74e378fbcc2fb3819421e73.jpg">https://up.enterdesk.com/edpic/70/0e/33/700e3312f74e378fbcc2fb3819421e73.jpg</a>)；<br>2.直接传图片，<a href="#Websocket协议概述">参考【2.服务规范】中的照片编码规则</a>。<br>设备【验证模式】为【人脸或卡】时可以不传照片，非【人脸或卡】模式这个字段为必传</td>
+		</tr>
+		<tr>
+			<td>vlface_template</td>
+			<td>否</td>
+			<td>string</td>
+			<td>红外照片，图片规则和"face_template"一致。非必传，旷世算法设备为空就好</td>
+		</tr>
+		<tr>
+			<td>Ic</td>
+			<td>否</td>
+			<td>string</td>
+			<td>ic卡号。备注：下发的卡号为十进制时需要在【设备设置】-【识别设置】-【验证模式-人脸或卡】-【卡号类型-十进制】，默认为十六进制</td>
+		</tr>
+		<tr>
+			<td>id_card</td>
+			<td>否</td>
+			<td>string</td>
+			<td>身份证号码</td>
+		</tr>
+		<tr>
+			<td>confidence_level</td>
+			<td>否</td>
+			<td>float</td>
+			<td>单个人员的置信度，如果这个有值则通过了系统设置的执行度值后会再次判断这个值</td>
+		</tr>
+		<tr>
+			<td>phone</td>
+			<td>否</td>
+			<td>string</td>
+			<td>手机号</td>
+		</tr>
+		<tr>
+			<td>user_type</td>
+			<td>否</td>
+			<td>int</td>
+			<td>"0"：正常用户；"10"：黑名单用户，识别后设备会报警，并产生黑名单识别记录；"2"：访客（访客到期后会自动从设备中删除）；"20"：只测温，不开门人员（只识别，测体温，亮绿灯，不通行）；可以不传，不传默认为正常用户</td>
+		</tr>
+		<tr>
+			<td>effect_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>人员生效时间（人员在这个时间点后，才能通行）格式："yyyy-MM-dd"或者"yyyy-MM-dd HH:mm"，为""则为永久</td>
+		</tr>
+		<tr>
+			<td>id_valid</td>
+			<td>否</td>
+			<td>string</td>
+			<td>人员有效期（人员在这个时间点后，无法通行）格式："yyyy-MM-dd"或者"yyyy-MM-dd HH:mm"，为""则为永久</td>
+		</tr>
+		<tr>
+			<td>valid_cycle</td>
+			<td>否</td>
+			<td>array</td>
+			<td>人员的通行周期，用于更精准的控制人员的通行时间段，这个字段不为空时"start_time"和"end_time"必传，存在通行规则时"valid_cycle"无效</td>
+		</tr>
+		<tr>
+			<td>start_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>周期开始时间，24小时制，精确到分"HH:mm"</td>
+		</tr>
+		<tr>
+			<td>end_time</td>
+			<td>否</td>
+			<td>string</td>
+			<td>周期结束时间，24小时制，精确到分"HH:mm"</td>
+		</tr>
+		<tr>
+			<td>pass_rule_id</td>
+			<td>否</td>
+			<td>string</td>
+			<td>通行规则id，需要预先下发规则到设备，如果存在通行规则那么判断逻辑为(生效时间-过期时间)&gt;通行规则&gt;人员信息中的"valid_cycle"</td>
+		</tr>
+	</tbody>
+</table><p><strong><span>服务端指令格式（</span><a href='https://github.com/Jimmy-J/MarkdownPhotos/raw/master/easco/protocol/websocket/下发人员数据.zip'><span>下载完整json数据</span></a><span>）</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json" style="break-inside: unset;"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_device"</span>,</span></pre></div><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"client_id"</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"设备编号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"editUser"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"name"</span>:<span class="cm-string">"姓名"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"Ic"</span>:<span class="cm-string">"ic卡号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"effect_time"</span>:<span class="cm-string">"2020-02-02 19:20"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"id_valid"</span>:<span class="cm-string">"2020-02-02 20:20"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"face_template"</span>:<span class="cm-string">"彩色照片base64 + url 编码格式"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"vlface_template"</span>:<span class="cm-string">"红外照片base64 + url 编码格式"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"confidence_level"</span>:<span class="cm-number">80</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"phone"</span>:<span class="cm-string">"18503036206"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"valid_cycle"</span>:[</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"start_time"</span>:<span class="cm-string">"07:00"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"end_time"</span>:<span class="cm-string">"08:00"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  },</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"start_time"</span>:<span class="cm-string">"12:00"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"end_time"</span>:<span class="cm-string">"13:30"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  }</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp;  ]</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 621px;"></div><div class="CodeMirror-gutters" style="display: none; height: 621px;"></div></div></div></pre><p><strong><span>设备端返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_client"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"设备编号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"上面请求示例form的client_id "</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"editUserRet"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"上面请求示例user_id的用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"code"</span>:<span class="cm-number">0</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"msg"</span>:<span class="cm-string">"返回说明"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 253px;"></div><div class="CodeMirror-gutters" style="display: none; height: 253px;"></div></div></div></pre><p><strong><span>返回参数说明</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>"to_client"发送给网页端</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>string</td>
+			<td>设备编号</td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>string</td>
+			<td>网页端的"wss"客户端唯一"id"</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>array</td>
+			<td>返回的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>code</td>
+			<td>int</td>
+			<td>"0": 成功，其它值表示失败。<br><a href="#全局错误码"><b>全局错误码</b></a></td>
+		</tr>
+		<tr>
+			<td>msg</td>
+			<td>string</td>
+			<td>返回说明</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><h1 class="hx_pm" id='删除人员信息'><span>删除人员信息</span></h1><p><strong><span>简要描述：</span></strong></p><ul><li><span>实时删除设备上的人员信息</span></li></ul><p><strong><span>请求方式：</span></strong></p><ul><li><span>websocket</span></li></ul><p><strong><span>请求参数：</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">必选</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>"to_device"发送给设备</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>是</td>
+			<td>string</td>
+			<td><a href="#常见问题 - FAQ">请查看常见问题 - web socket 文档中的 form 字段内容传什么值</a></td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>是</td>
+			<td>string</td>
+			<td>设备编号</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>是</td>
+			<td>array</td>
+			<td>发送的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>是</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>user_type</td>
+			<td>否</td>
+			<td>int</td>
+			<td>删除的用户类型；"0"：表示<a href="#下发人员信息到设备">人脸接口</a>下发的数据；"1"：表示人证比对接口下发的数据；不传默认为"0"。</td>
+		</tr>
+	</tbody>
+</table><p><strong><span>服务端指令格式</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_device"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"client_id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"设备编号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"delUser"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_type"</span>:<span class="cm-number">0</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 230px;"></div><div class="CodeMirror-gutters" style="display: none; height: 230px;"></div></div></div></pre><p><strong><span>设备端返回示例</span></strong></p><pre class="md-fences md-end-block ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.5px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">{</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"to_client"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"form"</span>:<span class="cm-string">"设备编号"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"to"</span>:<span class="cm-string">"上面请求示例form的client_id "</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"data"</span>:{</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"cmd"</span>:<span class="cm-string">"delUserRet"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"user_id"</span>:<span class="cm-string">"上面请求示例user_id的用户id"</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"code"</span>:<span class="cm-number">0</span>,</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp; &nbsp; &nbsp;<span class="cm-string cm-property">"msg"</span>:<span class="cm-string">"返回说明"</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp;  }</span></pre><div class="" style="position: relative;"><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 253px;"></div><div class="CodeMirror-gutters" style="display: none; height: 253px;"></div></div></div></pre><p><strong><span>返回参数说明</span></strong></p><table>
+	<tbody>
+		<tr>
+			<th style="width: 20%;">参数名</th>
+			<th style="width: 10%;">类型</th>
+			<th>说明</th>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>"to_client"发送给网页端</td>
+		</tr>
+		<tr>
+			<td>form</td>
+			<td>string</td>
+			<td>设备编号</td>
+		</tr>
+		<tr>
+			<td>to</td>
+			<td>string</td>
+			<td>网页端的"wss"客户端唯一"id"</td>
+		</tr>
+		<tr>
+			<td>data</td>
+			<td>array</td>
+			<td>返回的数据</td>
+		</tr>
+		<tr>
+			<td>cmd</td>
+			<td>string</td>
+			<td>指令</td>
+		</tr>
+		<tr>
+			<td>code</td>
+			<td>int</td>
+			<td>"0"：成功；其他失败</td>
+		</tr>
+		<tr>
+			<td>msg</td>
+			<td>string</td>
+			<td>返回说明</td>
+		</tr>
+	</tbody>
+</table><p>&nbsp;</p></div></div>
+    </div>
+  </div>
+<script>(function(){var e=document.body.parentElement,t=[],n=null,i=document.body.classList.contains("typora-export-collapse-outline"),r=function(e,t,n){document.addEventListener(e,function(e){if(!e.defaultPrevented)for(var i=e.target;i&&i!=this;i=i.parentNode)if(i.matches(t)){!1===n.call(i,e)&&(e.preventDefault(),e.stopPropagation());break}},!1)};function o(){return e.scrollTop}r("click",".outline-expander",function(e){var t=this.closest(".outline-item-wrapper").classList;return t.contains("outline-item-open")?t.remove("outline-item-open"):t.add("outline-item-open"),d(),!1}),r("click",".outline-item",function(e){var t=this.querySelector(".outline-label");if(location.hash="#"+t.getAttribute("href"),i){var n=this.closest(".outline-item-wrapper").classList;n.contains("outline-item-open")||n.add("outline-item-open"),c(),n.add("outline-item-active")}});var a,s,l=function(){var e=o();n=null;for(var i=0;i<t.length&&t[i][1]-e<60;i++)n=t[i]},c=function(){document.querySelectorAll(".outline-item-active").forEach(e=>e.classList.remove("outline-item-active")),document.querySelectorAll(".outline-item-single.outline-item-open").forEach(e=>e.classList.remove("outline-item-open"))},d=function(){if(n){c();var e=document.querySelector('.outline-label[href="#'+(CSS.escape?CSS.escape(n[0]):n[0])+'"]');if(e)if(i){var t=e.closest(".outline-item-open>ul>.outline-item-wrapper");if(t)t.classList.add("outline-item-active");else{for(var r=(e=e.closest(".outline-item-wrapper")).parentElement.closest(".outline-item-wrapper");r;)r=(e=r).parentElement.closest(".outline-item-wrapper");e.classList.add("outline-item-active")}}else e.closest(".outline-item-wrapper").classList.add("outline-item-active")}};window.addEventListener("scroll",function(e){a&&clearTimeout(a),a=setTimeout(function(){l(),d()},300)});var u=function(){s=setTimeout(function(){!function(){t=[];var e=o();document.querySelector("#write").querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(n=>{var i=n.getAttribute("id");t.push([i,e+n.getBoundingClientRect().y])})}(),l(),d()},300)};window.addEventListener("resize",function(e){s&&clearTimeout(s),u()}),u()})();</script></body>
+</html>
